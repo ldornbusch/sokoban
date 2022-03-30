@@ -3,8 +3,16 @@
 3 = start("@") ; 4 = box("$") ; 5 = box on dest("*")
 """
 import os
+import levelmaps
 
 int_to_char = {0: " ", 1: ".", 2: "#", 3: "@", 4: "$", 5: "*"}
+all_levels = [levelmaps.level_set01, levelmaps.level_set02, levelmaps.level_set03,
+              levelmaps.level_set04, levelmaps.level_set05]
+
+def load_file_content(filename):
+    with open(filename, "r") as f:
+        tmp_lst = f.readlines()
+    return tmp_lst
 
 
 class Playfield:
@@ -60,20 +68,20 @@ class Playfield:
             dst_tile = "*"
         self._data[stone_target[1]][stone_target[0]] = dst_tile
 
-    def load_level(self, level):
-        filename = "levels/l%d.asc" % level
-        if os.path.isfile(filename):
-            self.load_standard_level(filename)
-        filename = "levels/l%d.lev" % level
-        if os.path.isfile(filename):
-            self.load_legacy_level(filename)
-
-    def load_standard_level(self, filename):
-        with open(filename, "r") as f:
-            tmp_lst = f.readlines()
+    def load_level(self, level, set_indicator=-1):
+        if set_indicator == -1:
+            filename = "levels/l%d.asc" % level
+            if os.path.isfile(filename):
+                self.load_standard_level(load_file_content(filename))
+            filename = "levels/l%d.lev" % level
+            if os.path.isfile(filename):
+                self.load_legacy_level(load_file_content(filename))
+        else:
+            self.load_standard_level(all_levels[set_indicator][level])
+    def load_standard_level(self, level_content):
         retval = [[]]
         counter = [0, 0]
-        for line in tmp_lst:
+        for line in level_content:
             retval.append([])
             counter[1] += 1
             counter[0] = 0
@@ -85,9 +93,7 @@ class Playfield:
                     retval[-1].append(char)
         self._data = retval
 
-    def load_legacy_level(self, filename):
-        with open(filename, "r") as f:
-            tmp_lst = f.readlines()
+    def load_legacy_level(self, level_content):
         retval = []
         for y in range(0, 16):
             retval.append([])
@@ -95,8 +101,8 @@ class Playfield:
                 val = 2
                 if x < 18 and y < 14:
                     count = (y - 1) * 17 + x - 1
-                    if count < len(tmp_lst):
-                        val = tmp_lst[count]
+                    if count < len(level_content):
+                        val = level_content[count]
                 if int(val) == 3:
                     self._start_pos = (x, y)
                 retval[y].append(int_to_char[int(val)])

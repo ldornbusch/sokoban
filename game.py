@@ -23,7 +23,7 @@ class Painter:
         self.start = gfx_creator.create_exit()
         self.floor = gfx_creator.create_floor()
         self.box = gfx_creator.create_box()
-        self.char_to_tile = {" ": self.floor, ".": self.dest, "#": self.wall,
+        self.char_to_tile = {"'":self.floor, " ": self.floor, ".": self.dest, "#": self.wall,
                              "@": self.start, "$": self.box, "*": self.box}
 
     def hal_blt(self, img, coords):
@@ -81,8 +81,8 @@ class Game:
         self._playfield = playfield.Playfield()
         self._painter = Painter(screen)
         self._player = Player(self._playfield)
-        self._level = 11
-        self._playfield.load_level(self._level)
+        self._level = 1
+        self._playfield.load_level(self._level,0)
         self._player.set_position(self._playfield.start_position)
         self._player.set_target((0, 0))
 
