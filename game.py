@@ -9,6 +9,9 @@ TILE_HEIGHT = 16
 MAX_TILES_HOR = 40
 MAX_TILES_VER = 29
 
+GAME_RUN = "run"
+GAME_SOLVED = "solved"
+
 
 class Painter:
     def __init__(self, screen):
@@ -27,21 +30,26 @@ class Painter:
         self.floor = gfx_creator.create_floor()
         self.box = gfx_creator.create_box()
         self.char_to_tile = {"'": self.floor, " ": self.floor, ".": self.dest, "#": self.wall,
-                             "@": self.start, "$": self.box, "*": self.box}
+                             "@": self.start, "+": self.start, "$": self.box, "*": self.box}
 
     def hal_blt(self, img, coords):
         self.screen.blit(img, (coords[0] * self.X_SCALE, coords[1] * self.Y_SCALE))
 
-    def paint(self, playfield_data, player):
+    def paint(self, frame_counter, playfield_data, player, game_status):
         for y in range(0, MAX_TILES_VER):
             for x in range(0, MAX_TILES_HOR):
                 tile = self.floor
                 if y < len(playfield_data) and x < len(playfield_data[y]):
-                    tile = self.char_to_tile[playfield_data[y][x]]
+                    char = playfield_data[y][x]
+                    tile = self.char_to_tile[char]
+                    # flashing blocks on solved board
+                    if game_status == GAME_SOLVED and frame_counter % 60 > 30 and char in ["$", "*"]:
+                        tile = self.dest
                 if x == 0 or y == 0 or x == MAX_TILES_HOR - 1 or y == MAX_TILES_VER - 1:
                     tile = self.wall
                 self.hal_blt(tile, (x * TILE_WIDTH, y * TILE_HEIGHT))
-        self.hal_blt(self.hero, player._position)
+        if game_status == GAME_RUN:
+            self.hal_blt(self.hero, player._position)
 
 
 class Player:
@@ -91,16 +99,17 @@ class Game:
 
     def handle_key(self, key, is_pressed):
         if is_pressed:
-            if key == pygame.K_LEFT:
-                self._player.set_target((-1, 0))
-            if key == pygame.K_RIGHT:
-                self._player.set_target((1, 0))
-            if key == pygame.K_UP:
-                self._player.set_target((0, -1))
-            if key == pygame.K_DOWN:
-                self._player.set_target((0, 1))
-            if key == pygame.K_SPACE:
-                self.fire = is_pressed
+            if self._status == GAME_RUN:
+                if key == pygame.K_LEFT:
+                    self._player.set_target((-1, 0))
+                if key == pygame.K_RIGHT:
+                    self._player.set_target((1, 0))
+                if key == pygame.K_UP:
+                    self._player.set_target((0, -1))
+                if key == pygame.K_DOWN:
+                    self._player.set_target((0, 1))
+                if key == pygame.K_SPACE:
+                    self.fire = is_pressed
             if key == pygame.K_HOME:  # increment level collection
                 self._level_collection = (self._level_collection + 1) % 6
                 self.set_level(self._level)
@@ -114,17 +123,19 @@ class Game:
                 self.set_level(self._level)
 
     def handle_event(self, frame_counter):
-        self._player.move()
+        if self._status == GAME_RUN:
+            self._player.move()
         if self._playfield.is_complete():
-            exit()
+            self._status = GAME_SOLVED
 
     def paint(self, frame_counter):
-        self._painter.paint(self._playfield.data, self._player)
+        self._painter.paint(frame_counter, self._playfield.data, self._player, self._status)
         text = self._font.render("Col:%d Lev:%d" % (self._level_collection, self._level), False, (255, 255, 255))
         self._painter.hal_blt(text, (0, 465))
 
     def set_level(self, level):
         self._level = level
+        self._status = GAME_RUN
         self._playfield.load_level(self._level, self._level_collection - 1)
         self._player.set_position(self._playfield.start_position)
         self._player.set_target((0, 0))
