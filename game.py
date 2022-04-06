@@ -101,6 +101,17 @@ class Game:
                 self._player.set_target((0, 1))
             if key == pygame.K_SPACE:
                 self.fire = is_pressed
+            if key == pygame.K_HOME:  # increment level collection
+                self._level_collection = (self._level_collection + 1) % 6
+                self.set_level(self._level)
+            if key == pygame.K_END:  # reset level
+                self.set_level(self._level)
+            if key == pygame.K_PAGEUP:  # next level
+                self._level += 1
+                self.set_level(self._level)
+            if key == pygame.K_PAGEDOWN:  # previous level
+                self._level -= 1
+                self.set_level(self._level)
 
     def handle_event(self, frame_counter):
         self._player.move()
