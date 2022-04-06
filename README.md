@@ -1,6 +1,8 @@
 # sokoban
 
 sokoban client in pygame
+ 
+ <img src="https://github.com/ldornbusch/sokoban/raw/main/sokoban.py.png"/>
 
 re-created from over 30 year old Amiga Basic source code which I converted to GFABasic:
 https://github.com/ldornbusch/AmigaSource/blob/master/gfabasic/PushAndMove/PUSH.GFA
