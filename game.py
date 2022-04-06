@@ -84,10 +84,10 @@ class Game:
         self._playfield = playfield.Playfield()
         self._painter = Painter(screen)
         self._player = Player(self._playfield)
+        self._level_collection = 0  # valida values are 0-5 (0 means loading files from disk)
         self._level = 1
-        self._playfield.load_level(self._level, 0)
-        self._player.set_position(self._playfield.start_position)
-        self._player.set_target((0, 0))
+        self.set_level(self._level)
+        self._font = pygame.font.Font("topaz.ttf", 16)
 
     def handle_key(self, key, is_pressed):
         if is_pressed:
@@ -109,3 +109,11 @@ class Game:
 
     def paint(self, frame_counter):
         self._painter.paint(self._playfield.data, self._player)
+        text = self._font.render("Col:%d Lev:%d" % (self._level_collection, self._level), False, (255, 255, 255))
+        self._painter.hal_blt(text, (0, 465))
+
+    def set_level(self, level):
+        self._level = level
+        self._playfield.load_level(self._level, self._level_collection - 1)
+        self._player.set_position(self._playfield.start_position)
+        self._player.set_target((0, 0))
