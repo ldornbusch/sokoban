@@ -53,6 +53,10 @@ class Painter:
 
 
 class Player:
+    HALT = "halt"
+    PUSH = "push"
+    MOVE = "move"
+
     def __init__(self, game_map):
         self._game_map = game_map
         self._position = [-1, -1]
@@ -60,6 +64,7 @@ class Player:
         self._status = 0  # 0 = stop; 1,2,3,4 = moving(up,right, down, left) 5,6,7,8 = pushing
 
     def set_target(self, direction):
+        retval = Player.HALT
         xs = self._position[0] // TILE_WIDTH
         ys = self._position[1] // TILE_HEIGHT
         xco = int(xs + direction[0])
@@ -68,10 +73,13 @@ class Player:
             self._target[0] = xco * TILE_WIDTH
             self._target[1] = yco * TILE_HEIGHT
             self.set_position((xco, yco))
+            retval = Player.MOVE
         elif self._game_map.is_move_possible((xs, ys), (xco, yco)):
             self._game_map.perform_move((xs, ys), (xco, yco))
             self.set_position((xco, yco))
             self._target = list(self._position)
+            retval = Player.PUSH
+        return retval
 
     def move(self):
         offset = [0, 0]
@@ -92,34 +100,41 @@ class Game:
         self._playfield = playfield.Playfield()
         self._painter = Painter(screen)
         self._player = Player(self._playfield)
+        self._move = self._push = 0
         self._level_collection = 0  # valida values are 0-5 (0 means loading files from disk)
         self._level = 1
+        self._status = GAME_RUN
         self.set_level(self._level)
         self._font = pygame.font.Font("topaz.ttf", 16)
 
     def handle_key(self, key, is_pressed):
         if is_pressed:
             if self._status == GAME_RUN:
+                action = Player.HALT
                 if key == pygame.K_LEFT:
-                    self._player.set_target((-1, 0))
+                    action = self._player.set_target((-1, 0))
                 if key == pygame.K_RIGHT:
-                    self._player.set_target((1, 0))
+                    action = self._player.set_target((1, 0))
                 if key == pygame.K_UP:
-                    self._player.set_target((0, -1))
+                    action = self._player.set_target((0, -1))
                 if key == pygame.K_DOWN:
-                    self._player.set_target((0, 1))
+                    action = self._player.set_target((0, 1))
                 if key == pygame.K_SPACE:
                     self.fire = is_pressed
+                if action == Player.MOVE:
+                    self._move += 1
+                if action == Player.PUSH:
+                    self._push += 1
             if key == pygame.K_HOME:  # increment level collection
-                self._level_collection = (self._level_collection + 1) % 6
+                self._level_collection = (self._level_collection + 1) % (len(playfield.all_levels) + 1)
                 self.set_level(self._level)
             if key == pygame.K_END:  # reset level
                 self.set_level(self._level)
             if key == pygame.K_PAGEUP:  # next level
-                self._level += 1
+                self._level = (self._level + 1) % playfield.get_max_levels(self._level_collection - 1)
                 self.set_level(self._level)
             if key == pygame.K_PAGEDOWN:  # previous level
-                self._level -= 1
+                self._level = (self._level - 1) % playfield.get_max_levels(self._level_collection - 1)
                 self.set_level(self._level)
 
     def handle_event(self, frame_counter):
@@ -130,12 +145,17 @@ class Game:
 
     def paint(self, frame_counter):
         self._painter.paint(frame_counter, self._playfield.data, self._player, self._status)
-        text = self._font.render("Col:%d Lev:%d" % (self._level_collection, self._level), False, (255, 255, 255))
+        text = self._font.render(
+            "Moves:{:d} Pushs:{:d} Col:{:d} Lev:{:d}/{:d}"
+                .format(self._move, self._push, self._level_collection,
+                        self._level, playfield.get_max_levels(self._level_collection - 1)),
+            False, (255, 255, 255))
         self._painter.hal_blt(text, (0, 465))
 
     def set_level(self, level):
         self._level = level
         self._status = GAME_RUN
-        self._playfield.load_level(self._level, self._level_collection - 1)
+        self._move = self._push = 0
+        self._playfield.load_level(self._level - 1, self._level_collection - 1)
         self._player.set_position(self._playfield.start_position)
         self._player.set_target((0, 0))

@@ -16,6 +16,13 @@ def load_file_content(filename):
     return tmp_lst
 
 
+def get_max_levels(set_indicator):
+    if set_indicator >= 0:
+        return len(all_levels[set_indicator])
+    else:
+        return 14
+
+
 class Playfield:
     def __init__(self):
         self._data = []
@@ -71,10 +78,10 @@ class Playfield:
 
     def load_level(self, level, set_indicator=-1):
         if set_indicator == -1:
-            filename = "levels/l%d.asc" % level
+            filename = "levels/l%d.asc" % (level + 1)
             if os.path.isfile(filename):
                 self.load_standard_level(load_file_content(filename))
-            filename = "levels/l%d.lev" % level
+            filename = "levels/l%d.lev" % (level + 1)
             if os.path.isfile(filename):
                 self.load_legacy_level(load_file_content(filename))
         else:
