@@ -9,6 +9,7 @@ int_to_char = {0: " ", 1: ".", 2: "#", 3: "@", 4: "$", 5: "*"}
 all_levels = [levelmaps.level_set01, levelmaps.level_set02, levelmaps.level_set03,
               levelmaps.level_set04, levelmaps.level_set05]
 
+
 def load_file_content(filename):
     with open(filename, "r") as f:
         tmp_lst = f.readlines()
@@ -78,6 +79,7 @@ class Playfield:
                 self.load_legacy_level(load_file_content(filename))
         else:
             self.load_standard_level(all_levels[set_indicator][level])
+
     def load_standard_level(self, level_content):
         retval = [[]]
         counter = [0, 0]

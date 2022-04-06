@@ -6,6 +6,9 @@ import gfx_creator
 TILE_WIDTH = 16
 TILE_HEIGHT = 16
 
+MAX_TILES_HOR = 40
+MAX_TILES_VER = 29
+
 
 class Painter:
     def __init__(self, screen):
@@ -23,19 +26,19 @@ class Painter:
         self.start = gfx_creator.create_exit()
         self.floor = gfx_creator.create_floor()
         self.box = gfx_creator.create_box()
-        self.char_to_tile = {"'":self.floor, " ": self.floor, ".": self.dest, "#": self.wall,
+        self.char_to_tile = {"'": self.floor, " ": self.floor, ".": self.dest, "#": self.wall,
                              "@": self.start, "$": self.box, "*": self.box}
 
     def hal_blt(self, img, coords):
         self.screen.blit(img, (coords[0] * self.X_SCALE, coords[1] * self.Y_SCALE))
 
     def paint(self, playfield_data, player):
-        for y in range(0, 16):
-            for x in range(0, 20):
+        for y in range(0, MAX_TILES_VER):
+            for x in range(0, MAX_TILES_HOR):
                 tile = self.floor
                 if y < len(playfield_data) and x < len(playfield_data[y]):
                     tile = self.char_to_tile[playfield_data[y][x]]
-                if x == 0 or y == 0 or x == 19 or y == 15:
+                if x == 0 or y == 0 or x == MAX_TILES_HOR - 1 or y == MAX_TILES_VER - 1:
                     tile = self.wall
                 self.hal_blt(tile, (x * TILE_WIDTH, y * TILE_HEIGHT))
         self.hal_blt(self.hero, player._position)
@@ -82,7 +85,7 @@ class Game:
         self._painter = Painter(screen)
         self._player = Player(self._playfield)
         self._level = 1
-        self._playfield.load_level(self._level,0)
+        self._playfield.load_level(self._level, 0)
         self._player.set_position(self._playfield.start_position)
         self._player.set_target((0, 0))
 
@@ -99,10 +102,10 @@ class Game:
             if key == pygame.K_SPACE:
                 self.fire = is_pressed
 
-    def handle_event(self):
+    def handle_event(self, frame_counter):
         self._player.move()
         if self._playfield.is_complete():
             exit()
 
-    def paint(self):
+    def paint(self, frame_counter):
         self._painter.paint(self._playfield.data, self._player)
